@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema({
     verifyLink: { type: String },
     verifyLinkExpiresAt: { type: Date },
     profilePicture:{ type: String, default: 'https://upload.wikimedia.org/wikipedia/commons/1/12/User_icon_2.svg' },
-    // verifyCode: { type: String},
-    // verifyCodeExpiresAt: { type: Date },
+    verifyCode: { type: String},
+    verifyCodeExpiresAt: { type: Date}, // 10 minutes
     isVerified:{ type: Boolean, default: false }, 
 },{timestamps: true});
 

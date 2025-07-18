@@ -4,7 +4,6 @@ import UserModel from "@/models/User.model";
 import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { ApiError } from "@/utils/ApiError";
-import crypto from "crypto";
 
 export async function POST(req) {
     await dbConnect();

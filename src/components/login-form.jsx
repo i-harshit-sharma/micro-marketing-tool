@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -12,49 +11,58 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { signInSchema } from "@/schema/signInSchema";
-// Validation Schema
-// const signInSchema = z.object({
-//   identifier: z.string().min(3, "Username or email is required"),
-//   password: z.string().min(6, "Password must be at least 6 characters"),
-// });
 
 export function LoginForm({ className, ...props }) {
   const router = useRouter();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [formErrors, setFormErrors] = useState({});
-  const [apiError, setApiError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get("/api/status");
+        if (res.status === 200) {
+        }
+        else {
+          toast.error("API is down", { position: "top-center" });
+        }
+      } catch (error) {
+        toast.error("API is down", { position: "top-center" });
+      }
+    })();
+  }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiError("");
-    setFormErrors({});
+    setIsLoading(true);
 
     const result = signInSchema.safeParse({ identifier, password });
     if (!result.success) {
       const errors = {};
       const messages = result.error.issues.map(issue => {
         toast.error(issue.message || "Validation error");
+        console.error("Validation error:", issue.message);
       });
+      setIsLoading(false);
 
       return;
     }
 
     try {
-      const res = await axios.post("/api/log-in", { identifier, password });
+      const res = await axios.post("/api/login", { identifier, password });
       toast.success("Login successful!");
 
-      setTimeout(() => {
         router.push("/dashboard");
-      }, 1500);
     } catch (err) {
-      const msg =
-        axios.isAxiosError(err) && err.response?.data?.message
-          ? err.response.data.message
-          : "Something went wrong.";
-      setApiError(msg);
+      const msg = err.message || "Something went wrong with API.";
+      console.error("Login error:", err.message);
       toast.error(msg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,17 +106,11 @@ export function LoginForm({ className, ...props }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                {formErrors.password && (
-                  <p className="text-red-500 text-sm">{formErrors.password}</p>
-                )}
+
               </div>
 
-              {apiError && (
-                <p className="text-red-500 text-sm text-center">{apiError}</p>
-              )}
-
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Loading..." : "Login"}
               </Button>
 
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
@@ -121,9 +123,9 @@ export function LoginForm({ className, ...props }) {
 
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <Link href="/register" className="underline underline-offset-4">
                   Sign up
-                </a>
+                </Link>
               </div>
             </div>
           </form>
